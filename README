@@ -64,3 +64,24 @@ Ubuntu cloud users are welcome to add other Pollen servers to their pool, or jus
 
 Be safe, and secure out there!
 :-Dustin
+
+METRICS
+------------------------------
+
+The metrics subsystem is a new feature in Pollen that you can initialize and activate using the -metrics-port command-line argument. Once enabled, the Pollen server will provide standard Prometheus metrics via the /metrics endpoint at the specified port.
+
+The set of metrics pollen provided is outlined below:
+
+ Metric Name                                       | Metric Type | Metric Description
+---------------------------------------------------|-------------|-------------------
+ pollen_http_requests_total                        | Counter     | The total number of requests
+ pollen_http_responses_codes                       | Counter     | Total responses sent to clients by code
+ pollen_http_response_seconds                      | Histogram   | Response time by code
+ pollen_system_entropy                             | Gauge       | System available entropy (entropy_avail)
+ pollen_response_entropy_per_byte                  | Histogram   | Entropy per bit of the random data in response
+ pollen_response_entropy_arithmetic_mean_deviation | Histogram   | Arithmetic mean deviation of the random data in response
+
+Notes:
+  pollen_system_entropy: This metric may not be very useful for systems running newer kernels, due to the implementation of the new CRNG-based kernel random device.
+  pollen_response_entropy_per_byte and pollen_response_entropy_arithmetic_mean_deviation: these two metrics might not be very significant as the sample size for each measurement is limited to a single response, which is 64 bytes by default.
+  Despite these factors, all three metrics mentioned above continue to be observed to be inline with the current pollen logging and the check_pollen script.

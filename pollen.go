@@ -36,12 +36,13 @@ import (
 )
 
 var (
-	httpPort  = flag.String("http-port", "80", "The HTTP port on which to listen")
-	httpsPort = flag.String("https-port", "443", "The HTTPS port on which to listen")
-	device    = flag.String("device", "/dev/random", "The device to use for reading and writing random data")
-	size      = flag.Int("bytes", 64, "The size in bytes to read from the random device")
-	cert      = flag.String("cert", "/etc/pollen/cert.pem", "The full path to cert.pem")
-	key       = flag.String("key", "/etc/pollen/key.pem", "The full path to key.pem")
+	httpPort    = flag.String("http-port", "80", "The HTTP port on which to listen")
+	httpsPort   = flag.String("https-port", "443", "The HTTPS port on which to listen")
+	metricsPort = flag.String("metrics-port", "", "The Prometheus metrics HTTP endpoint port")
+	device      = flag.String("device", "/dev/random", "The device to use for reading and writing random data")
+	size        = flag.Int("bytes", 64, "The size in bytes to read from the random device")
+	cert        = flag.String("cert", "/etc/pollen/cert.pem", "The full path to cert.pem")
+	key         = flag.String("key", "/etc/pollen/key.pem", "The full path to key.pem")
 )
 
 // this matches the syslog.Writer functions
@@ -58,16 +59,19 @@ type PollenServer struct {
 	randomSource io.ReadWriter
 	log          logger
 	readSize     int
+	tracker      *Tracker
 }
 
 const usePollinateError = "Please use the pollinate client.  'sudo apt-get install pollinate' or download from: https://bazaar.launchpad.net/~pollinate/pollinate/trunk/view/head:/pollinate"
 
 func (p *PollenServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
+	p.tracker.RequestReceived()
 	var avail []byte
 	challenge := r.FormValue("challenge")
 	if challenge == "" {
 		http.Error(w, usePollinateError, http.StatusBadRequest)
+		p.tracker.ResponseSent(http.StatusBadRequest, time.Since(startTime))
 		return
 	}
 	checksum := sha512.New()
@@ -93,18 +97,23 @@ func (p *PollenServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		/* Fatal error for this connection, if we can't read from device */
 		p.log.Err(fmt.Sprintf("Cannot read from random device at [%v]", time.Now().UnixNano()))
 		http.Error(w, "Failed to read from random device", http.StatusInternalServerError)
+		p.tracker.ResponseSent(http.StatusInternalServerError, time.Since(startTime))
 		return
 	}
+	p.tracker.EntropyQa(data)
 	checksum.Write(data)
 	/* The checksum of the bytes from /dev/random is simply for print-ability, when debugging */
 	seed := checksum.Sum(nil)
 	fmt.Fprintf(w, "%x\n%x\n", challengeResponse, seed)
+	p.tracker.ResponseSent(200, time.Since(startTime))
 	/* Record entropy bits after */
 	avail, err = ioutil.ReadFile("/proc/sys/kernel/random/entropy_avail")
 	if err != nil {
 		/* Non-fatal error */
 		p.log.Err(fmt.Sprintf("Cannot record entropy bits at [%v]", time.Now().UnixNano()))
 		avail = []byte{'?'}
+	} else {
+		p.tracker.SystemEntropy(avail)
 	}
 	p.log.Info(fmt.Sprintf("Server sent response to [%s, %s] at [%v] in [%.6fs] with [e%s] available",
 		r.RemoteAddr, r.UserAgent(), time.Now().UnixNano(), time.Since(startTime).Seconds(), strings.Split(string(avail), "\n")[0]))
@@ -126,7 +135,12 @@ func main() {
 		fatalf("Cannot open device: %s\n", err)
 	}
 	defer dev.Close()
-	handler := &PollenServer{randomSource: dev, log: log, readSize: *size}
+	var tracker *Tracker
+
+	if *metricsPort != "" {
+		tracker = NewTracker()
+	}
+	handler := &PollenServer{randomSource: dev, log: log, readSize: *size, tracker: tracker}
 	http.Handle("/", handler)
 	var httpListeners sync.WaitGroup
 	if *httpPort != "" {
@@ -144,6 +158,14 @@ func main() {
 			config := &tls.Config{MinVersion: tls.VersionTLS10}
 			server := &http.Server{Addr: httpsAddr, Handler: handler, TLSConfig: config}
 			handler.fatal(server.ListenAndServeTLS(*cert, *key))
+			httpListeners.Done()
+		}()
+	}
+	if *metricsPort != "" {
+		metricsAddr := fmt.Sprintf(":%s", *metricsPort)
+		httpListeners.Add(1)
+		go func() {
+			handler.fatal(tracker.StartMetricsServer(metricsAddr))
 			httpListeners.Done()
 		}()
 	}
