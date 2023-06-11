@@ -1,0 +1,46 @@
+name: pollen
+version: '4.22-metrics'
+summary: Pollen server with Prometheus metrics support.
+description: >-
+  Pollen is a high-performance, scalable, free web server that provides
+  'Entropy-as-a-Service' by offering small strings of entropy over both HTTPS
+  and clear-text HTTP connections.
+  
+  Canonical provides a Pollen server as a service to the Ubuntu community at
+  https://entropy.ubuntu.com. Beginning with Ubuntu 14.04, Ubuntu cloud images
+  include the Pollinate client, which will try
+  (for up to 3 seconds at first boot) to seed the PRNG with input from
+  https://entropy.ubuntu.com.
+  
+  This snap package is specifically designed to work with the Pollen charm
+  in order to provide easy and seamless deployment within a juju-managed
+  environment. This snapped pollen includes additional support for
+  Prometheus metrics to integrate with Canonical Observability Stack.
+
+license: GPL-3.0
+base: core22
+grade: stable
+confinement: strict
+
+apps:
+  pollen:
+    command: start-pollen
+    daemon: simple
+    plugs:
+      - network
+      - network-bind
+
+parts:
+  pollen:
+    plugin: go
+    source: .
+    build-snaps:
+      - go
+  install-start-script:
+    plugin: dump
+    source: ./snap/local
+    prime:
+      - start-pollen
+
+hooks:
+  configure: { }

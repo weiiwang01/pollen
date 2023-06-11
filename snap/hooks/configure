@@ -1,0 +1,90 @@
+#!/bin/bash
+set -e
+
+mkdir -p $SNAP_COMMON/cert
+
+validate_port() {
+    if ! [ "$1" -eq "$1" ] 2> /dev/null || [ "$1" -le 0 ] || [ "$1" -gt 65535 ]; then
+        echo "invalid port number: $1"
+        exit 1
+    fi
+}
+
+validate_bool() {
+    if [ "$1" != "true" ] && [ "$1" != "false" ]; then
+        echo "invalid boolean value: $1"
+        exit 1
+    fi
+}
+
+validate_unique_ports() {
+    if [ "$1" = "$2" ] || [ "$1" = "$3" ] || [ "$2" = "$3" ]; then
+        echo "http, https, and metrics ports must be unique"
+        exit 1
+    fi
+}
+
+# Set the default values if not already set
+[ -z "$(snapctl get http.enable)" ] && snapctl set http.enable="true"
+[ -z "$(snapctl get http.port)" ] && snapctl set http.port="80"
+[ -z "$(snapctl get https.enable)" ] && snapctl set https.enable="false"
+[ -z "$(snapctl get https.port)" ] && snapctl set https.port="443"
+[ -z "$(snapctl get https.cert)" ] && snapctl set https.cert="$SNAP_COMMON/cert/cert.pem"
+[ -z "$(snapctl get https.key)" ] && snapctl set https.key="$SNAP_COMMON/cert/key.pem"
+[ -z "$(snapctl get metrics.enable)" ] && snapctl set metrics.enable="true"
+[ -z "$(snapctl get metrics.port)" ] && snapctl set metrics.port="2112"
+
+http_enable="$(snapctl get http.enable)"
+http_port="$(snapctl get http.port)"
+https_enable="$(snapctl get https.enable)"
+https_port="$(snapctl get https.port)"
+https_cert="$(snapctl get https.cert)"
+https_key="$(snapctl get https.key)"
+metrics_enable="$(snapctl get metrics.enable)"
+metrics_port="$(snapctl get metrics.port)"
+
+# validate the configuration values
+validate_bool "$http_enable"
+validate_port "$http_port"
+validate_bool "$https_enable"
+validate_port "$https_port"
+validate_bool "$metrics_enable"
+validate_port "$metrics_port"
+validate_unique_ports "$http_port" "$https_port" "$metrics_port"
+if [ "$http_enable" != "true" ] && [ "$https_enable" != "true" ]; then
+    echo "at least one of http or https must be enabled"
+    exit 1
+fi
+if [ "$https_enable" = "true" ]; then
+    if [ ! -f "$https_cert" ]; then
+        echo "certificate file does not exist for enabling https: $https_cert"
+        exit 1
+    fi
+    if [ ! -f "$https_key" ]; then
+        echo "private key file does not exist for enabling https: $https_key"
+        exit 1
+    fi
+fi
+
+# build pollen command line arguments
+if [ "$http_enable" = "true" ]; then
+    args=" -http-port=$http_port"
+else
+    args=" -http-port="
+fi
+
+if [ "$https_enable" = "true" ]; then
+    args="$args -https-port=$https_port -cert=\"$https_cert\" -key=\"$https_key\""
+else
+    args="$args -https-port="
+fi
+
+if [ "$metrics_enable" = "true" ]; then
+    args="$args -metrics-port=$metrics_port"
+else
+    args="$args -metrics-port="
+fi
+
+echo "$args" > $SNAP_DATA/args
+
+snapctl restart ${SNAP_NAME}.pollen

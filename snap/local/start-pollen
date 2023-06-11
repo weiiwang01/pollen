@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+
+eval "exec pollen $(cat $SNAP_DATA/args)"
