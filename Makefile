@@ -4,10 +4,10 @@ GO_CLEAN=go clean
 
 all: pollen
 
-pollen: pollen.go
-	$(GO_BUILD) -o $@ $<
+pollen: pollen.go metrics.go
+	$(GO_BUILD) -o $@ $^
 
-test: pollen.go pollen_test.go
+test: pollen.go pollen_test.go metrics.go metrics_test.go
 	$(GO_TEST)
 
 clean:
