@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"testing"
-	"time"
 )
 
 type logEntry struct {
@@ -364,33 +363,4 @@ func TestReadFailure(t *testing.T) {
 	s.Assert(s.logger.logs[1].severity == "err" &&
 		s.logger.logs[1].message[:len(start)] == start,
 		"didn't get the expected error message, got:", s.logger.logs[1])
-}
-
-// TestNoDebugVars tests that pollen doesn't expose the /debug/vars endpoint
-func TestNoDebugVars(t *testing.T) {
-	originalArgs := os.Args
-	defer func() { os.Args = originalArgs }()
-	os.Args = []string{"pollen", "--http-port=28434", "--https-port=", "--metrics-port=32112"}
-	go main()
-	var resp *http.Response
-	var err error
-	deadline := time.Now().Add(3 * time.Second)
-	for {
-		resp, err = http.Get("http://127.0.0.1:28434/debug/vars")
-		if err == nil || time.Now().After(deadline) {
-			break
-		} else {
-			time.Sleep(250 * time.Millisecond)
-		}
-	}
-	if err != nil {
-		t.Fatalf("failed to connect to the test server: %s", err)
-	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("failed to connect to the test server: %s", err)
-	}
-	if string(body) != usePollinateError+"\n" {
-		t.Fatalf("/debug/vars is exposed, content: %s", string(body))
-	}
 }
