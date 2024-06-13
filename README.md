@@ -26,7 +26,7 @@ latter, /dev/urandom, provides a non-blocking, limitless stream of
 pseudo random numbers.
 
 The manpage random(4) has a far more complete description of /dev/random
-and /dev/urandom.  (See http://manpg.es/random.4)
+and /dev/urandom.  (See [man random](http://manpg.es/random.4))
 
 For most practical purposes /dev/urandom is a perfectly adequate source
 of entropy, as long as it is seeded properly at each boot.
@@ -53,7 +53,7 @@ However, virtual machines typically have no access to real hardware and
 few, if any, sufficient entropy sources.  Several real attacks have been
 demonstrated recently against SSH and SSL via certificates generated
 with poor entropy, such as:
-https://factorable.net/weakkeys12.extended.pdf
+[Mining Your Ps and Qs: Detection of Widespread Weak Keys in Network Devices](https://factorable.net/weakkeys12.extended.pdf)
 
 The cryptographic security of virtual machines and cloud instances can
 be significantly improved by fetching a sufficient amount of entropy at
@@ -110,17 +110,18 @@ combined with the server's responses, and written into the Linux PRNG,
 ### POLLEN AND POLLINATE IN UBUNTU ###
 
 Canonical provides a Pollen server as a service to the Ubuntu community
-at https://entropy.ubuntu.com.  Beginning with Ubuntu 14.04, Ubuntu
-cloud images include the Pollinate client, which will try (for up to 3
-seconds at first boot) to seed the PRNG with input from
-https://entropy.ubuntu.com.  This service is highly available via
-multiple physical servers deployed in a cluster using Juju service
-orchestration.  Each of these Pollen servers have at least two hardware
-random number generators, ensuring high quality entropy as a service,
-and diversified against hardware failure.  Moreover, a busy Pollen
-server, handling many challenge/response calculations and serving
-numerous concurrent connections, will have a computationally complex and
-impossible to reproduce entropy state.
+at [https://entropy.ubuntu.com](https://entropy.ubuntu.com).  Beginning
+with Ubuntu 14.04, Ubuntu cloud images include the Pollinate client,
+which will try (for up to 3 seconds at first boot) to seed the PRNG with
+input from [https://entropy.ubuntu.com](https://entropy.ubuntu.com).
+This service is highly available via multiple physical servers deployed
+in a cluster using Juju service orchestration.  Each of these Pollen
+servers have at least two hardware random number generators, ensuring
+high quality entropy as a service, and diversified against hardware
+failure.  Moreover, a busy Pollen server, handling many
+challenge/response calculations and serving numerous concurrent
+connections, will have a computationally complex and impossible to
+reproduce entropy state.
 
 Ubuntu cloud users are welcome to add other Pollen servers to their
 pool, or just run their own internally, behind their own firewall.
