@@ -2,9 +2,8 @@ Source: pollen
 Section: admin
 Priority: optional
 Maintainer: Dustin Kirkland <kirkland@ubuntu.com>
-Build-Depends: debhelper (>= 7.0.50~),
+Build-Depends: debhelper (>= 13.6~),
  dh-apparmor,
- dh-systemd,
  golang-go,
  prometheus
 Standards-Version: 3.9.6
