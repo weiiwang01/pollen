@@ -1,6 +1,6 @@
 name: pollen
-version: '4.22-metrics'
-summary: Pollen server with Prometheus metrics support.
+version: 4.22
+summary: Pollen Entropy-as-a-Service web server
 description: >-
   Pollen is a high-performance, scalable, free web server that provides
   'Entropy-as-a-Service' by offering small strings of entropy over both HTTPS
