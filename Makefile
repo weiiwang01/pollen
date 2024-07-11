@@ -21,4 +21,10 @@ dist: pollen
 clean:
 	$(RM) pollen
 
+snap: clean
+	export SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY=4G
+	export SNAPCRAFT_BUILD_ENVIRONMENT_CPU=4
+	export SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT=4
+	snapcraft
+
 .PHONY: all clean test
