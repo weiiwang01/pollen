@@ -5,7 +5,8 @@ Maintainer: Dustin Kirkland <kirkland@ubuntu.com>
 Build-Depends: debhelper (>= 13.6~),
  dh-apparmor,
  golang-go,
- prometheus
+ prometheus,
+ golang-github-prometheus-client-golang-dev,
 Standards-Version: 3.9.6
 Homepage: http://launchpad.net/pollen
 
