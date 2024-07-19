@@ -141,13 +141,14 @@ func main() {
 		tracker = NewTracker()
 	}
 	handler := &PollenServer{randomSource: dev, log: log, readSize: *size, tracker: tracker}
-	http.Handle("/", handler)
+	mux := http.NewServeMux()
+	mux.Handle("/", handler)
 	var httpListeners sync.WaitGroup
 	if *httpPort != "" {
 		httpAddr := fmt.Sprintf(":%s", *httpPort)
 		httpListeners.Add(1)
 		go func() {
-			handler.fatal(http.ListenAndServe(httpAddr, nil))
+			handler.fatal(http.ListenAndServe(httpAddr, mux))
 			httpListeners.Done()
 		}()
 	}
