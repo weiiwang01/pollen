@@ -4,10 +4,12 @@ Priority: optional
 Maintainer: Dustin Kirkland <kirkland@ubuntu.com>
 Build-Depends: debhelper (>= 7.0.50~),
  dh-apparmor,
- dh-systemd,
- golang-go
+ dh-sequence-golang,
+ golang-any,
+ golang-github-prometheus-client-golang-dev
 Standards-Version: 3.9.6
 Homepage: http://launchpad.net/pollen
+XS-Go-Import-Path: github.com/canonical/pollen
 
 Package: pollen
 Architecture: any
