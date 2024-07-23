@@ -1,4 +1,4 @@
-module pollen
+module github.com/canonical/pollen
 
 go 1.20
 
