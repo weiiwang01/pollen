@@ -162,5 +162,5 @@ Notes:
     might not be very significant as the sample size for each measurement
     is limited to a single response, which is 64 bytes by default.
   - Despite these factors, all three metrics mentioned above continue to
-    be observed to be inline with the current pollen logging and the
-    check_pollen script.
+    be observed to be inline with the current pollen logging and
+    pollinate's check_pollen script.
