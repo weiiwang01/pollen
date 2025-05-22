@@ -68,7 +68,7 @@ func NewSuite(t *testing.T) *Suite {
 func NewSuiteWithDev(t *testing.T, dev io.ReadWriter) *Suite {
 	logger := &localLogger{}
 	handler := &PollenServer{randomSource: dev, log: logger, readSize: 64}
-	return &Suite{httptest.NewServer(handler), t, dev, logger, handler}
+	return &Suite{httptest.NewServer(PollenServerMux(handler)), t, dev, logger, handler}
 }
 
 func (s *Suite) Assert(v bool, args ...interface{}) {
@@ -363,4 +363,18 @@ func TestReadFailure(t *testing.T) {
 	s.Assert(s.logger.logs[1].severity == "err" &&
 		s.logger.logs[1].message[:len(start)] == start,
 		"didn't get the expected error message, got:", s.logger.logs[1])
+}
+
+// TestReadFailure tests if the health check endpoint returns ok.
+func TestHealthCheck(t *testing.T) {
+	s := NewSuite(t)
+	defer s.TearDown()
+
+	res, err := http.Get(s.URL + "/health")
+	s.Assert(err == nil, "http client error:", err)
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	s.Assert(err == nil, "response err:", err)
+	s.Assert(string(body) == "OK", "health check returns: ", string(body))
 }

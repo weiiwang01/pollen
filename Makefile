@@ -3,8 +3,8 @@ GO_TEST=go test
 GO_CLEAN=go clean
 GIT_ARCHIVE=git archive
 
-VERSION=4.22
-TAG=v4.22
+VERSION=4.23
+TAG=v4.23
 
 all: pollen
 

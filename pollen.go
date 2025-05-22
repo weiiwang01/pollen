@@ -119,6 +119,16 @@ func (p *PollenServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.RemoteAddr, r.UserAgent(), time.Now().UnixNano(), time.Since(startTime).Seconds(), strings.Split(string(avail), "\n")[0]))
 }
 
+// PollenServerMux creates a new http server mux for the pollen server.
+func PollenServerMux(server *PollenServer) *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = fmt.Fprint(w, "OK")
+	})
+	mux.Handle("/", server)
+	return mux
+}
+
 func main() {
 	flag.Parse()
 	if *httpPort == "" && *httpsPort == "" {
@@ -141,8 +151,7 @@ func main() {
 		tracker = NewTracker()
 	}
 	handler := &PollenServer{randomSource: dev, log: log, readSize: *size, tracker: tracker}
-	mux := http.NewServeMux()
-	mux.Handle("/", handler)
+	mux := PollenServerMux(handler)
 	var httpListeners sync.WaitGroup
 	if *httpPort != "" {
 		httpAddr := fmt.Sprintf(":%s", *httpPort)
