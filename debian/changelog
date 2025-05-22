@@ -1,3 +1,9 @@
+pollen (4.23) UNRELEASED; urgency=low
+
+  * UNRELEASED
+
+ -- Weii Wang <weii.wang@canonical.com>  Thu, 22 May 2025 16:00:32 +0800
+
 pollen (4.22-0ubuntu1) oracular; urgency=medium
 
   * New upstream release 4.22
